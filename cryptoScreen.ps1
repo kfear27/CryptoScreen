@@ -17,41 +17,40 @@ if ($majorVer -ge 6) {
     }
 } else { Write-Host "$($E)Unknown OS, Exiting"; exit; }
 Import-Module ServerManager
-if (Get-Command Get-WindowsFeature) {
-    $checkFSRM = Get-WindowsFeature -Name FS-Resource-Manager
-    if (($OS -eq "2016+") -or ($OS -eq "2012R2") -or ($OS -eq "2012")) {
-        if ($checkFSRM.Installed -ne "True") {
-            $Install = Install-WindowsFeature -Name FS-Resource-Manager -IncludeManagementTools
-            if ($? -ne $True) { Write-Host "$($E)Install of FSRM Failed, Exiting"; exit; }
-            $Method = "PowerShell";
-        }
+$checkFSRM = Get-WindowsFeature -Name FS-Resource-Manager
+if (($OS -eq "2016+") -or ($OS -eq "2012R2") -or ($OS -eq "2012")) {
+    if ($checkFSRM.Installed -ne "True") {
+        Write-Host "$($I)Server 2012 or Higher Detected, Checking for FSRM"
+        $Install = Install-WindowsFeature -Name FS-Resource-Manager -IncludeManagementTools
+        if ($? -ne $True) { Write-Host "$($E)Install of FSRM Failed, Exiting"; exit; }
+        $Method = "PowerShell";
     }
-    if ($OS -eq "2008R2") {
-        if ($checkFSRM.Installed -ne "True") {
-            $Install = Add-WindowsFeature FS-FileServer, FS-Resource-Manager
-            if ($? -ne $True) { Write-Host "$($E)Install of FSRM Failed, Exiting"; exit; }
-            $Method = "&filescrn.exe";
-        }
+}
+if ($OS -eq "2008R2") {
+    if ($checkFSRM.Installed -ne "True") {
+        Write-Host "$($I)Server 2008R2 Detected, Checking for FSRM"
+        $Install = Add-WindowsFeature FS-FileServer, FS-Resource-Manager
+        if ($? -ne $True) { Write-Host "$($E)Install of FSRM Failed, Exiting"; exit; }
+        $Method = "&filescrn.exe";
     }
-    if ($OS -eq "2008") {
-        if ($checkFSRM.Installed -ne "True") {
-            $Install = &servermanagercmd -Install FS-FileServer FS-Resource-Manager
-            if ($? -ne $True) { Write-Host "$($E)Install of FSRM Failed, Exiting"; exit; }
-            $Method = "&filescrn.exe";
-        }
+}
+if ($OS -eq "2008") {
+    if ($checkFSRM.Installed -ne "True") {
+        Write-Host "$($I)Server 2008 Detected, Checking for FSRM"
+        $Install = &servermanagercmd -Install FS-FileServer FS-Resource-Manager
+        if ($Install -like "*already installed*") { Write-Host "$($I)FSRM Already Installed" }
+        else { Write-Host "$($E)Please Manually Install FSRM"; exit; }
     }
-} else { Write-Host "$($E)Unable to Detect FSRM, Exiting..."; exit; }
+}
 
 $Dir = "C:\STS"
-$ExtOld = "CryptoBlockerExtensions.old.txt"
-$ExtNew = "CryptoBlockerExtensions.txt"
+$ExtOld = "CryptoScreenExtensions.old.txt"
+$ExtNew = "CryptoScreenExtensions.txt"
 $URL = "https://fsrm.experiant.ca/api/v1/get"
 
-$ExtGroupName = "CryptoBlocker_Extensions"
-$TemplateName = "CryptoBlocker_Template"
-$FileScreenName = "CryptoBlocker"
-
-$KillSwitch = New-FsrmAction -Type Command -Command "c:\Windows\System32\cmd.exe" -CommandParameters "/c net stop lanmanserver /y" -SecurityLevel LocalSystem -KillTimeOut 0
+$ExtGroupName = "CryptoScreen_Extensions"
+$TemplateName = "CryptoScreen_Template"
+$FileScreenName = "CryptoScreen"
 
 Invoke-WebRequest $URL -OutFile "$($Dir)\$($ExtNew)" -UseBasicParsing
 
@@ -114,6 +113,9 @@ if (($OS -ne "2016+") -or ($OS -ne "2012R2") -or ($OS -ne "2012")) {
 }
 
 if ($Method -eq "PowerShell") {
+
+    $KillSwitch = New-FsrmAction -Type Command -Command "c:\Windows\System32\cmd.exe" -CommandParameters "/c net stop lanmanserver /y" -SecurityLevel LocalSystem -KillTimeOut 0
+
     $delFSRMShares = Get-FsrmFileScreen | Select-Object Template, Path | Where-Object { $_.Template -like "$($TemplateName)" } | Select-Object -ExpandProperty Path
     ForEach ($Path in $delFSRMShares) {
         Remove-FsrmFileScreen $Path -Confirm:$False
