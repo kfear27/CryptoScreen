@@ -1,47 +1,6 @@
 $I = "[info]`t`t"; $E = "[error]`t`t"; $S = "[success]`t";
+$ErrorActionPreference = "SilentlyContinue"
 $PSVer = $PSVersionTable.PSVersion.Major
-$majorVer = [System.Environment]::OSVersion.Version.Major
-$minorVer = [System.Environment]::OSVersion.Version.Minor
-$OS = "Unknown";
-if ($PSVer -le 2) {
-    Write-Host "$($E)PowerShell Version Out of Date"
-    Exit
-}
-if ($majorVer -ge 6) {
-    if ($majorVer -eq 10) { $OS = "2016+" }
-    if ($majorVer -eq 6) {
-        if ($minorVer -eq 3) { $OS = "2012R2" }
-        if ($minorVer -eq 2) { $OS = "2012" }
-        if ($minorVer -eq 1) { $OS = "2008R2" }
-        if ($minorVer -eq 0) { $OS = "2008" }
-    }
-} else { Write-Host "$($E)Unknown OS, Exiting"; exit; }
-Import-Module ServerManager
-$checkFSRM = Get-WindowsFeature -Name FS-Resource-Manager
-if (($OS -eq "2016+") -or ($OS -eq "2012R2") -or ($OS -eq "2012")) {
-    if ($checkFSRM.Installed -ne "True") {
-        Write-Host "$($I)Server 2012 or Higher Detected, Checking for FSRM"
-        $Install = Install-WindowsFeature -Name FS-Resource-Manager -IncludeManagementTools
-        if ($? -ne $True) { Write-Host "$($E)Install of FSRM Failed, Exiting"; exit; }
-        $Method = "PowerShell";
-    }
-}
-if ($OS -eq "2008R2") {
-    if ($checkFSRM.Installed -ne "True") {
-        Write-Host "$($I)Server 2008R2 Detected, Checking for FSRM"
-        $Install = Add-WindowsFeature FS-FileServer, FS-Resource-Manager
-        if ($? -ne $True) { Write-Host "$($E)Install of FSRM Failed, Exiting"; exit; }
-        $Method = "&filescrn.exe";
-    }
-}
-if ($OS -eq "2008") {
-    if ($checkFSRM.Installed -ne "True") {
-        Write-Host "$($I)Server 2008 Detected, Checking for FSRM"
-        $Install = &servermanagercmd -Install FS-FileServer FS-Resource-Manager
-        if ($Install -like "*already installed*") { Write-Host "$($I)FSRM Already Installed" }
-        else { Write-Host "$($E)Please Manually Install FSRM"; exit; }
-    }
-}
 
 $Dir = "C:\STS"
 $ExtOld = "CryptoScreenExtensions.old.txt"
@@ -65,6 +24,49 @@ if (Test-Path "$($Dir)\$($ExtOld)") {
 else {
     Write-Host "$($I)Previous Extension List Missing"
     Write-Host "$($I)Either 1st Time Run or Deleted"
+}
+
+$majorVer = [System.Environment]::OSVersion.Version.Major
+$minorVer = [System.Environment]::OSVersion.Version.Minor
+$OS = "Unknown";
+if ($PSVer -le 2) {
+    Write-Host "$($E)PowerShell Version Out of Date"
+    Exit
+}
+if ($majorVer -ge 6) {
+    if ($majorVer -eq 10) { $OS = "2016+" }
+    if ($majorVer -eq 6) {
+        if ($minorVer -eq 3) { $OS = "2012R2" }
+        if ($minorVer -eq 2) { $OS = "2012" }
+        if ($minorVer -eq 1) { $OS = "2008R2" }
+        if ($minorVer -eq 0) { $OS = "2008" }
+    }
+} else { Write-Host "$($E)Unknown OS, Exiting"; exit; }
+Import-Module ServerManager
+$checkFSRM = Get-WindowsFeature -Name FS-Resource-Manager
+if (($OS -eq "2016+") -or ($OS -eq "2012R2") -or ($OS -eq "2012")) {
+    if ($checkFSRM.Installed -ne "True") {
+        Write-Host "$($I)Server 2012 or Higher Detected, Checking for FSRM"
+        $Install = Install-WindowsFeature -Name FS-Resource-Manager -IncludeManagementTools
+        if ($? -ne $True) { Write-Host "$($E)Install of FSRM Failed, Exiting"; exit; }
+    }
+    $Method = "PowerShell";
+}
+if ($OS -eq "2008R2") {
+    if ($checkFSRM.Installed -ne "True") {
+        Write-Host "$($I)Server 2008R2 Detected, Checking for FSRM"
+        $Install = Add-WindowsFeature FS-FileServer, FS-Resource-Manager
+        if ($? -ne $True) { Write-Host "$($E)Install of FSRM Failed, Exiting"; exit; }
+        $Method = "&filescrn.exe";
+    }
+}
+if ($OS -eq "2008") {
+    if ($checkFSRM.Installed -ne "True") {
+        Write-Host "$($I)Server 2008 Detected, Checking for FSRM"
+        $Install = &servermanagercmd -Install FS-FileServer FS-Resource-Manager
+        if ($Install -like "*already installed*") { Write-Host "$($I)FSRM Already Installed" }
+        else { Write-Host "$($E)Please Manually Install FSRM"; exit; }
+    }
 }
 
 $Shares = Get-WmiObject Win32_Share | Select-Object Name,Path,Type | Where-Object { $_.Type -match  '0|2147483648' } | Select-Object -ExpandProperty Path | Select-Object -Unique
