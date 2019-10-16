@@ -18,6 +18,7 @@ if (Test-Path "$($Dir)\$($ExtOld)") {
     $Diff = Compare-Object -ReferenceObject $(Get-Content "$($Dir)\$($ExtNew)") -DifferenceObject $(Get-Content "$($Dir)\$($ExtOld)")
     if (!$Diff) {
         Write-Host "$($I)No New Extentions to Apply - Exiting"
+        Remove-Item -Path "$($Dir)\$($ExtNew)"
         Exit
     }
 }
