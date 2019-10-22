@@ -2,17 +2,38 @@ $I = "[info]`t`t"; $E = "[error]`t`t"; $S = "[success]`t";
 $ErrorActionPreference = "SilentlyContinue"
 $PSVer = $PSVersionTable.PSVersion.Major
 
+## Working Directory of the Script
 $Dir = "C:\STS"
-$ExtOld = "CryptoScreenExtensions.old.txt"
+## File Names of Bad Extensions, Old & New used for Comparision
 $ExtNew = "CryptoScreenExtensions.txt"
+$ExtOld = "CryptoScreenExtensions.old.txt"
+## URL With Known Bad Extensions
 $URL = "https://fsrm.experiant.ca/api/v1/get"
-
-$ExtGroupName = "CryptoScreen_Extensions"
-$TemplateName = "CryptoScreen_Template"
+## Naming Scheme for Screens, Templates & Extensions
 $FileScreenName = "CryptoScreen"
-
+$TemplateName = "CryptoScreen_Template"
+$ExtGroupName = "CryptoScreen_Extensions"
+## Exclusion Arrays for Extensions & Shares
+## @('add*','*.exclusions','in*this*','format.csv')
 $ExcludedShares = @();
 $ExcludedExtensions = @();
+## You can use a txt file for each exclusion list if you prefer
+## Add one exclusion per line and save the file(s) in the same folder as $Dir
+$ExcludedSharesFile = "CryptoScreen_ExcludedShares.txt"
+$ExcludedExtensionsFile = "CryptoScreen_ExcludedExtensions.txt"
+
+if (Test-Path "$($Dir)\$($ExcludedSharesFile)") {
+    $ExcludedSharesFileContents = Get-Content "$($Dir)\$($ExcludedSharesFile)" | ForEach-Object { $_.trim() }
+    ForEach ($ExShare in $ExcludedSharesFileContents) {
+        $ExcludedShares += $ExShare
+    }
+}
+if (Test-Path "$($Dir)\$($ExcludedExtensionsFile)") {
+    $ExcludedExtensionsFileContents = Get-Content "$($Dir)\$($ExcludedExtensionsFile)" | ForEach-Object { $_.trim() }
+    ForEach ($ExExt in $ExcludedExtensionsFileContents) {
+        $ExcludedExtensions += $ExExt
+    }
+}
 
 Invoke-WebRequest $URL -OutFile "$($Dir)\$($ExtNew)" -UseBasicParsing
 
@@ -147,7 +168,7 @@ if ($Method -eq "PowerShell") {
         if ($Share -notin $ExcludedShares) {
             New-FsrmFileScreen -Path $Share -Active:$true -Description "$($FileScreenName)" -IncludeGroup "$($ExtGroupName)" -Template "$($TemplateName)"
             Write-Host "$($I)Share File Screen $($Share) based on $($TemplateName) for the Extensions List Group $($ExtGroupName) Has Been Created"
-        }
+        } else { Write-Host "$($I)Share of $($Share) Has Been Excluded" -ForegroundColor Green }
     }
 }
 else {
@@ -165,7 +186,7 @@ else {
         if ($Share -notin $ExcludedShares) {
             &filescrn.exe Screen Delete "/Path:$Share" /Quiet
             &filescrn.exe Screen Add "/Path:$Share" "/SourceTemplate:$TemplateName"
-        }
+        } else { Write-Host "$($I)Share of $($Share) Has Been Excluded" -ForegroundColor Green }
     }
 }
 
