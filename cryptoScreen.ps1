@@ -11,6 +11,9 @@ $ExtGroupName = "CryptoScreen_Extensions"
 $TemplateName = "CryptoScreen_Template"
 $FileScreenName = "CryptoScreen"
 
+$ExcludedShares = @();
+$ExcludedExtensions = @();
+
 Invoke-WebRequest $URL -OutFile "$($Dir)\$($ExtNew)" -UseBasicParsing
 
 if (Test-Path "$($Dir)\$($ExtOld)") {
@@ -21,11 +24,7 @@ if (Test-Path "$($Dir)\$($ExtOld)") {
         Remove-Item -Path "$($Dir)\$($ExtNew)"
         Exit
     }
-}
-else {
-    Write-Host "$($I)Previous Extension List Missing"
-    Write-Host "$($I)Either 1st Time Run or Deleted"
-}
+} else { Write-Host "$($I)Previous Extension List Missing"; Write-Host "$($I)Either 1st Time Run or Deleted" }
 
 $majorVer = [System.Environment]::OSVersion.Version.Major
 $minorVer = [System.Environment]::OSVersion.Version.Minor
@@ -110,7 +109,12 @@ Function Split-ExtensionGroup {
 }
 
 $jsonStr = Invoke-WebRequest -Uri $URL -UseBasicParsing
-$Extensions = @(ConvertFrom-Json20($jsonStr) | ForEach-Object { $_.filters })
+$tempExt = @(ConvertFrom-Json20($jsonStr) | ForEach-Object { $_.filters })
+$Extensions = @();
+ForEach ($Ext in $tempExt) {
+    if ($Ext -notin $ExcludedExtensions) { $Extensions += $Ext }
+}
+
 if (($OS -ne "2016+") -or ($OS -ne "2012R2") -or ($OS -ne "2012")) {
     $ExtensionGroups = @(Split-ExtensionGroup $Extensions)
 }
@@ -140,8 +144,10 @@ if ($Method -eq "PowerShell") {
     Write-Host "$($I)Creating FSRM File Template $($TemplateName) including $($TemplateName)"
     New-FsrmFileScreenTemplate -Name "$($TemplateName)" -Active:$True -IncludeGroup "$($ExtGroupName)"
     ForEach ($Share in $Shares) {
-        New-FsrmFileScreen -Path $Share -Active:$true -Description "$($FileScreenName)" -IncludeGroup "$($ExtGroupName)" -Template "$($TemplateName)"
-        Write-Host "$($I)Share File Screen $($Share) based on $($TemplateName) for the Extensions List Group $($ExtGroupName) Has Been Created"
+        if ($Share -notin $ExcludedShares) {
+            New-FsrmFileScreen -Path $Share -Active:$true -Description "$($FileScreenName)" -IncludeGroup "$($ExtGroupName)" -Template "$($TemplateName)"
+            Write-Host "$($I)Share File Screen $($Share) based on $($TemplateName) for the Extensions List Group $($ExtGroupName) Has Been Created"
+        }
     }
 }
 else {
@@ -155,9 +161,11 @@ else {
         $Arguments += "/Add-Filegroup:$($group.ExtGroupName)"
     }
     &filescrn.exe $Arguments
-    $Shares | ForEach-Object {
-        &filescrn.exe Screen Delete "/Path:$_" /Quiet
-        &filescrn.exe Screen Add "/Path:$_" "/SourceTemplate:$TemplateName"
+    ForEach ($Share in $Shares) {
+        if ($Share -notin $ExcludedShares) {
+            &filescrn.exe Screen Delete "/Path:$Share" /Quiet
+            &filescrn.exe Screen Add "/Path:$Share" "/SourceTemplate:$TemplateName"
+        }
     }
 }
 
