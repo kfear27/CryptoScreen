@@ -17,7 +17,7 @@ Add one Share or Extension per line in these files, or simply add them to the va
 * `$ExcludedShares = @('C:\Share1','D:\DATA\Shares82')`
 * `$ExcludedExtensions = @('*.ext3','*.crypto')`
 
-Use both if you wish, it will merge them if the file exists and there is data alrwady passed in the array within the script.
+Use both if you wish, it will merge them if the file exists and there is data already passed in the array within the script.
 
 ### Thanks
 
