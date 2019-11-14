@@ -22,6 +22,9 @@ $ExcludedExtensions = @();
 $ExcludedSharesFile = "CryptoScreen_ExcludedShares.txt"
 $ExcludedExtensionsFile = "CryptoScreen_ExcludedExtensions.txt"
 
+## Event Log Message
+$EventLogMsg = "The user [Source Io Owner] try to save [Source File Path] in [File Screen Path] on [Server]. This extension is contained in [Violated File Group], and is not permit on this server."
+
 if (Test-Path "$($Dir)\$($ExcludedSharesFile)") {
     $ExcludedSharesFileContents = Get-Content "$($Dir)\$($ExcludedSharesFile)" | ForEach-Object { $_.trim() }
     ForEach ($ExShare in $ExcludedSharesFileContents) {
@@ -163,7 +166,8 @@ if ($Method -eq "PowerShell") {
     New-FsrmFileGroup -Name "$($ExtGroupName)" -IncludePattern $Extensions
 
     Write-Host "$($I)Creating FSRM File Template $($TemplateName) including $($TemplateName)"
-    New-FsrmFileScreenTemplate -Name "$($TemplateName)" -Active:$True -IncludeGroup "$($ExtGroupName)"
+    $Notification = New-FsrmAction -Type Event -EventType Warning -Body $($EventLogMsg) -RunLimitInterval 60
+    New-FsrmFileScreenTemplate -Name "$($TemplateName)" -Active:$True -IncludeGroup "$($ExtGroupName)" -Notification $Notification
     ForEach ($Share in $Shares) {
         if ($Share -notin $ExcludedShares) {
             New-FsrmFileScreen -Path $Share -Active:$true -Description "$($FileScreenName)" -IncludeGroup "$($ExtGroupName)" -Template "$($TemplateName)"
@@ -177,7 +181,7 @@ else {
         &filescrn.exe Filegroup Add "/Filegroup:$($group.ExtGroupName)" "/Members:$($group.array -Join '|')"
     }
     &filescrn.exe Template Delete /Template:$TemplateName /Quiet
-    $Arguments = 'Template', 'Add', "/Template:$TemplateName", "/Type:Active"
+    $Arguments = 'Template', 'Add', "/Template:$TemplateName", "/Type:Active", "/Add-Notification:e,$EventLogMsg"
     ForEach ($group in $ExtensionGroups) {
         $Arguments += "/Add-Filegroup:$($group.ExtGroupName)"
     }
