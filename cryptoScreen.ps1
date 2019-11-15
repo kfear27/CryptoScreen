@@ -145,6 +145,9 @@ if (($OS -ne "2016+") -or ($OS -ne "2012R2") -or ($OS -ne "2012")) {
 
 if ($Method -eq "PowerShell") {
 
+    ## Example of a Kill Switch, this is not used in production
+    ## This Kill Switch stops the Shares
+    ## This can be added after the -Notification switch, -Notification $Notification,$KillSwitch
     $KillSwitch = New-FsrmAction -Type Command -Command "c:\Windows\System32\cmd.exe" -CommandParameters "/c net stop lanmanserver /y" -SecurityLevel LocalSystem -KillTimeOut 0
 
     $delFSRMShares = Get-FsrmFileScreen | Select-Object Template, Path | Where-Object { $_.Template -like "$($TemplateName)" } | Select-Object -ExpandProperty Path
