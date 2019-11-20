@@ -1,6 +1,5 @@
 $I = "[info]`t`t"; $E = "[error]`t`t"; $S = "[success]`t";
 $ErrorActionPreference = "SilentlyContinue"
-$PSVer = $PSVersionTable.PSVersion.Major
 
 ## Working Directory of the Script
 $Dir = "C:\STS"
@@ -50,6 +49,7 @@ if (Test-Path "$($Dir)\$($ExtOld)") {
     }
 } else { Write-Host "$($I)Previous Extension List Missing"; Write-Host "$($I)Either 1st Time Run or Deleted" }
 
+$PSVer = $PSVersionTable.PSVersion.Major
 $majorVer = [System.Environment]::OSVersion.Version.Major
 $minorVer = [System.Environment]::OSVersion.Version.Minor
 $OS = "Unknown";
