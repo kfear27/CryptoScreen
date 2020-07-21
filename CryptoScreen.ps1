@@ -51,7 +51,7 @@ OR-pass-them-in
 D:\Using\A\Script
 "@
 $Exclusions = @()
-$Exclusions += $CryptoScreenExclusions.Split([Environment]::NewLine, [StringSplitOptions]::RemoveEmptyEntries)
+if ($CryptoScreenExclusions) { $Exclusions += $CryptoScreenExclusions.Split([Environment]::NewLine, [StringSplitOptions]::RemoveEmptyEntries) }
 if (Test-Path "$($Dir)\$($ExclusionsFile)") {
     $ExcludedFileContents = Get-Content "$($Dir)\$($ExclusionsFile)" | ForEach-Object { $_.trim() }
     ForEach ($Line in $ExcludedFileContents) {
@@ -168,3 +168,5 @@ else {
 }
 
 # Fin!
+
+
