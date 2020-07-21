@@ -8,16 +8,15 @@ On older systems it will use the `filescrn.exe` executable and on newer it will 
 
 The default working directory is set to `C:\STS`, change the `$Dir` variable value if you wish to change this.
 
-Exclusions can be added per extension or share via files in your working $Dir:
-* CryptoScreen_ExcludedShares.txt
-* CryptoScreen_ExcludedExtensions.txt
+Exclusions can be added into the textarea variable `$CryptoScreenExclusions` or in the `ExclusionsFile` file.
+Default FileName: CryptoScreen_Exclusions.txt
 
-Add one Share or Extension per line in these files, or simply add them to the variable in the script in this format:
-
-* `$ExcludedShares = @('C:\Share1','D:\DATA\Shares82')`
-* `$ExcludedExtensions = @('*.ext3','*.crypto')`
-
-Use both if you wish, it will merge them if the file exists and there is data already passed in the array within the script.
+You can exclude Shares and Extensions, one per line ie.
+```
+*.extension
+G:\Excluded_Share\Name\Here With\Spaces
+```
+You can place exclusions in both the script and the local file on the machine, it will emrge the two.
 
 By default violations will be logged within Event Viewer, there is a 'Kill Switch' configured with the `$KillSwitch` variable in which you can add this after the `-Notification` PowerShell switch.
 
@@ -25,7 +24,7 @@ By default violations will be logged within Event Viewer, there is a 'Kill Switc
 
 ```powershell
 $KillSwitch = New-FsrmAction -Type Command -Command "c:\Windows\System32\cmd.exe" -CommandParameters "/c net stop lanmanserver /y" -SecurityLevel LocalSystem -KillTimeOut 0
-$EventLogMsg = "The user [Source Io Owner] try to save [Source File Path] in [File Screen Path] on [Server]. This extension is contained in [Violated File Group], and is not permit on this server."
+$EventLogMsg = "[Source Io Owner] attempted to save [Source File Path] in [File Screen Path] on [Server]. This extension is contained in [Violated File Group], and is not permit on this server."
 $TemplateName = "CryptoScreen_Template"
 $ExtGroupName = "CryptoScreen_Extensions"
 $Notification = New-FsrmAction -Type Event -EventType Warning -Body $($EventLogMsg) -RunLimitInterval 60
