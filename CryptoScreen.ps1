@@ -19,7 +19,7 @@ $EventLogMsg = "[Source Io Owner] attempted to save [Source File Path] in [File 
 $PowerShellVersion = $PSVersionTable.PSVersion.Major
 if ($PowerShellVersion -le 2) { Write-Host "Update PowerShell before continuing. Current version is 2.0 or lower" -ForegroundColor Red; Exit; }
 
-[decimal]$OSVersion = -Join ([System.Environment]::OSVersion.Version.Major,".",[System.Environment]::OSVersion.Version.Minor)
+[decimal]$OSVersion = -Join ([System.Environment]::OSVersion.Version.Major, ".", [System.Environment]::OSVersion.Version.Minor)
 Write-Host "OS Version Number: $($OSVersion)"
 if ($OSVersion -ge 6.2) { $UsePowerShellModule = $True } else { $UsePowerShellModule = $False }
 if ($UsePowerShellModule) { Write-Host "Using PowerShell Commands for FSRM (OS >= 6.2)" } else { Write-Host "Using &filescrn.exe Executable Comamnds for FSRM (OS < 6.2)" }
@@ -41,7 +41,7 @@ if ($FSRM.Installed -ne "True") {
     }
 }
 
-$Shares = Get-WmiObject Win32_Share | Select-Object Name,Path,Type | Where-Object { $_.Type -match  '0|2147483648' } | Select-Object -ExpandProperty Path | Select-Object -Unique
+$Shares = Get-WmiObject Win32_Share | Select-Object Name, Path, Type | Where-Object { $_.Type -match '0|2147483648' } | Select-Object -ExpandProperty Path | Select-Object -Unique
 
 $CryptoScreenExclusions = @"
 *.add_some
@@ -116,7 +116,8 @@ if ($UsePowerShellModule) {
         if ($Share -NotIn $ExcludedShares) {
             New-FsrmFileScreen -Path $Share -Active:$True -Description "$($FileScreenName)" -IncludeGroup "$($ExtGroupName)" -Template "$($TemplateName)"
             Write-Host "Share File Screen $($Share) based on $($TemplateName) for the Extensions List Group $($ExtGroupName) Has Been Created"
-        } else { Write-Host "Share $($Share) Has Been Excluded" -ForegroundColor Green }
+        }
+        else { Write-Host "Share $($Share) Has Been Excluded" -ForegroundColor Green }
     }
 }
 else {
@@ -129,9 +130,9 @@ else {
         $Ext | ForEach-Object {
             if (($LengthOfStringsInWorkingArray + 1 + $_.Length) -gt 4000) {
                 [PSCustomObject]@{
-                    index = $WorkingArrayIndex
+                    index        = $WorkingArrayIndex
                     ExtGroupName = "$Script:ExtGroupName$WorkingArrayIndex"
-                    array = $workingArray
+                    array        = $workingArray
                 }
                 $workingArray = @($_)
                 $LengthOfStringsInWorkingArray = $_.Length
@@ -143,9 +144,9 @@ else {
             }
         }
         [PSCustomObject]@{
-            index = ($WorkingArrayIndex)
+            index        = ($WorkingArrayIndex)
             ExtGroupName = "$Script:ExtGroupName$WorkingArrayIndex"
-            array = $workingArray
+            array        = $workingArray
         }
     }
     $ExtensionGroups = @(Split-ExtensionGroup $RecompiledExtensions)
@@ -163,7 +164,8 @@ else {
         if ($Share -NotIn $ExcludedShares) {
             &filescrn.exe Screen Delete "/Path:$Share" /Quiet
             &filescrn.exe Screen Add "/Path:$Share" "/SourceTemplate:$TemplateName"
-        } else { Write-Host "Share $($Share) Has Been Excluded" -ForegroundColor Green }
+        }
+        else { Write-Host "Share $($Share) Has Been Excluded" -ForegroundColor Green }
     }
 }
 
