@@ -12,6 +12,8 @@ $ExtGroupName = "CryptoScreen_Extensions"
 
 $CryptoScreenExtensions = Invoke-WebRequest -Uri "https://fsrm.experiant.ca/api/v1/get" -UseBasicParsing
 $Extensions = ($CryptoScreenExtensions | ConvertFrom-Json).Filters
+# PowerShell Module DOwnload File Format
+$Extensions = $Extensions | Where-Object { $_ -ne "*.0.cs" }
 
 # Event Log Message
 $EventLogMsg = "[Source Io Owner] attempted to save [Source File Path] in [File Screen Path] on [Server]. This extension is contained in [Violated File Group], and is not permit on this server."
